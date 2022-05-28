@@ -59,7 +59,8 @@ void setup() {
   //set the interrupt threshold to fire when proximity reading goes above 2
   apds.setProximityInterruptThreshold(0, 2);
   apds.enableProximityInterrupt();
-  APDS.setGestureSensitivity(95);
+  // apds.enableGesture(true);
+  APDS.setGestureSensitivity(90);
   Keyboard.begin();
 }
 
@@ -67,31 +68,20 @@ uint8_t j=0;
 
 void loop() {
 
-  // print the proximity reading when the interrupt pin goes low
-  if (!digitalRead(PIN_INTERRUPT)){
-    ledState=1;
-    uint16_t prox = apds.readProximity();
-    if (prox < 3) prox = 0;  // ignore 1 and 2 readings
-    strip.setBrightness(prox);
-
-    //clear the interrupt
-    apds.clearInterrupt();
-    if(ledState!=lastledState){
-      Keyboard.write('K');
-    }                  
-  } 
-  else if (APDS.gestureAvailable()){
+  if (APDS.gestureAvailable()){
     int gesture = APDS.readGesture();
     ledState=1;
     uint16_t prox = apds.readProximity();
     if (prox < 3) prox = 0;  // ignore 1 and 2 readings
     strip.setBrightness(prox);
-    // if gesturing from right to left, hit the left arrow key (rewind video 5/10 sec).
-    // if gesturing up or to the right, pause the video.
+    //clear the interrupt
+    apds.clearInterrupt();
+    // if gesturing to the left, hit the left arrow key (rewind video 5/10 sec).
+    // for any other gesture, pause the video.
     if (gesture == GESTURE_UP){
       Keyboard.write(KEY_LEFT_ARROW);
     }
-    else if (gesture == GESTURE_DOWN || gesture == GESTURE_RIGHT){
+    else {
       Keyboard.write('K');
     }   
   }
@@ -100,7 +90,6 @@ void loop() {
     ledState=0;
   }
   lastledState = ledState;
-
 
   strip.fill(Wheel(j));
   strip.show();
